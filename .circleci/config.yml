@@ -1,0 +1,21 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/build
+    docker:
+      - image: quay.io/vektorcloud/cibase:latest
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 17.05.0-ce
+      - run: docker build -t postgis .
+      - deploy: 
+          command: |
+            if [[ "$CIRCLE_BRANCH" == "master" ]]; then
+              docker tag postgis quay.io/vektorcloud/postgis:latest
+            else
+              docker tag postgis quay.io/vektorcloud/postgis:${CIRCLE_BRANCH}
+            fi
+            docker login -u $DOCKER_USER -p $DOCKER_PASS quay.io
+            docker push quay.io/vektorcloud/postgis
+
